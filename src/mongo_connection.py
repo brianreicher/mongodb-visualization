@@ -32,7 +32,6 @@ class MongoConnector:
     def connect(self) -> None:
         """
         Connects to the MongoDB server.
-
         """
         self.client: pymongo.MongoClient = pymongo.MongoClient(host=self.host, port=self.port)
         self.db = self.client[self.db_name]
@@ -41,25 +40,42 @@ class MongoConnector:
     def disconnect(self) -> None:
         """
         Disconnects from the MongoDB server.
-
         """
         self.client.close()
     
-    def flush_collection(self, collection_name) -> None:
+    def flush_collection(self, collection_name: str) -> None:
+        """
+        Flushes a given collection on the established database on the MongoDB server.
+        
+        Args:
+            collection_name (str): The collection name to flush.
+        """
         collection = self.db[collection_name]
 
         # Delete all documents in the collection
         result = collection.delete_many({})
         print(f"Deleted {result.deleted_count} documents from {collection.name}")
 
-    def remove_collection(self, collection_name) -> None:
+    def remove_collection(self, collection_name: str) -> None:
+        """
+        Removes a given collection on the established database on the MongoDB server.
+
+        Args:
+            collection_name (str): The collection name to remove.
+        """
         collection = self.db[collection_name]
 
         # Drop the collection
         collection.drop()
         print(f"Dropped {collection.name} from {self.db.name}")
     
-    def create_collection(self, collection_name) -> None:
+    def create_collection(self, collection_name: str) -> None:
+        """
+        Creates a given collection on the established database on the MongoDB server.
+
+        Args:
+            collection_name (str): The collection name to create.
+        """
         self.db.create_collection(collection_name)
         print(f"Created collecton {collection_name} in {self.db.name}")
 
@@ -70,7 +86,7 @@ class MongoConnector:
         Args:
             collection_name (str): The name of the MongoDB collection.
             json_file (str): The path to the JSON file.
-
+            clear (bool): Whether to clear the collection of existing data.
         """
         try:
             collection = self.db.create_collection(collection_name)
@@ -87,8 +103,15 @@ class MongoConnector:
 
         print(f"{len(data)} documents inserted into collection {collection_name} in {self.db.name}.")
     
-    def query(self, collection_name: str) -> None:
-        # find documents where the 'status' field is 'active'
+    def query(self, collection_name: str, query: dict) -> None:
+        """
+        Method to execute queries on a given collection on the established database on the MongoDB server.
+
+        Args:
+            collection_name (str): The collection name to create.
+            query (dict): The collection query to execute.
+        """
+
         try:
             collection = self.db.create_collection(collection_name)
         except:
@@ -96,7 +119,7 @@ class MongoConnector:
 
         print(collection)
 
-        documents = collection.find()
+        documents = collection.find(query)
 
         # print each document
         for document in documents:
@@ -107,8 +130,8 @@ class MongoConnector:
 if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'sample')
     mongo.connect()
-    mongo.insert_data('sample_coll', 'data/sample.json', clear=False)
-    mongo.query('sample_coll')
+    mongo.insert_data('sample_coll', 'data/sample.json', clear=True)
+    mongo.query('sample_coll', {})
 
     mongo.flush_collection("sample_coll")
     mongo.disconnect()
