@@ -46,7 +46,6 @@ class MongoConnector:
         self.client.close()
     
     def flush_collection(self, collection_name) -> None:
-        db = self.client[self.db_name]
         collection = self.db[collection_name]
 
         # Delete all documents in the collection
@@ -54,14 +53,15 @@ class MongoConnector:
         print(f"Deleted {result.deleted_count} documents from {collection.name}")
 
     def remove_collection(self, collection_name) -> None:
-        db = self.client[self.db_name]
         collection = self.db[collection_name]
 
         # Drop the collection
         collection.drop()
+        print(f"Dropped {collection.name} from {self.db.name}")
     
     def create_collection(self, collection_name) -> None:
         self.db.create_collection(collection_name)
+        print(f"Created collecton {collection_name} in {self.db.name}")
 
     def insert_data(self, collection_name: str, json_file: str, clear=False) -> None:
         """
@@ -83,9 +83,9 @@ class MongoConnector:
         with open(json_file) as f:
             data: list = [json.load(f)]
             print(data)
-            # collection.insert_many(data)
+            collection.insert_many(data)
 
-        print(f"{len(data)} documents inserted into collection {collection_name}.")
+        print(f"{len(data)} documents inserted into collection {collection_name} in {self.db.name}.")
     
     def query(self, collection_name: str) -> None:
         # find documents where the 'status' field is 'active'
@@ -93,14 +93,13 @@ class MongoConnector:
             collection = self.db.create_collection(collection_name)
         except:
             collection = self.db[collection_name]
-        print("penis")
+
         print(collection)
 
         documents = collection.find()
 
         # print each document
         for document in documents:
-            print("penis2")
             print(document)
 
 
@@ -109,6 +108,6 @@ if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'sample')
     mongo.connect()
     # mongo.insert_data('sample_coll', 'data/sample.json', clear=False)
-    # mongo.flush_collection("sample_coll")
+    mongo.flush_collection("sample_coll")
     mongo.query('sample_coll')
     mongo.disconnect()
