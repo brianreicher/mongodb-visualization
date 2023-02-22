@@ -37,6 +37,7 @@ class MongoConnector:
         """
         self.client: pymongo.MongoClient = pymongo.MongoClient(host=self.host, port=self.port)
         self.db = self.client[self.db_name]
+        print(self.db)
 
     def disconnect(self) -> None:
         """
@@ -44,8 +45,26 @@ class MongoConnector:
 
         """
         self.client.close()
+    
+    def flush_collection(self, collection_name) -> None:
+        db = self.client[self.db_name]
+        collection = self.db[collection_name]
 
-    def insert_data(self, collection_name: str, json_file: str) -> None:
+        # Delete all documents in the collection
+        result = collection.delete_many({})
+        print(f"Deleted {result.deleted_count} documents from {collection.name}")
+
+    def remove_collection(self, collection_name) -> None:
+        db = self.client[self.db_name]
+        collection = self.db[collection_name]
+
+        # Drop the collection
+        collection.drop()
+    
+    def create_collection(self, collection_name) -> None:
+        self.db.create_collection(collection_name)
+
+    def insert_data(self, collection_name: str, json_file: str, clear=False) -> None:
         """
         Inserts data from a JSON file into a MongoDB collection.
 
@@ -54,15 +73,30 @@ class MongoConnector:
             json_file (str): The path to the JSON file.
 
         """
-        with open(json_file) as f:
-            data: List[Dict] = json.load(f)
+        try:
+            collection = self.db.create_collection(collection_name)
+        except:
             collection = self.db[collection_name]
-            collection.insert_many(data)
-        print(f"{len(data)} documents inserted into collection {collection_name}.")
+
+        if clear:
+            self.flush_collection(collection_name)
+
+
+        db_names: List[str] = self.client.list_database_names()
+
+        for name in db_names:
+            print(name)
+
+        with open(json_file) as f:
+            data = [json.load(f)]
+            print(data)
+            # collection.insert_many(data)
+
+        # print(f"{len(data)} documents inserted into collection {collection_name}.")
 
 
 if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
     mongo.connect()
-    mongo.insert_data('restaurants_db', '/Users/brianreicher/Downloads/restaurants.json')
+    mongo.insert_data('restaurants_collection', '/Users/brianreicher/Downloads/restaurants.json')
     mongo.disconnect()
