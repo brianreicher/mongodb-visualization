@@ -1,6 +1,5 @@
 import pymongo
 import json
-from typing import List, Dict
 
 
 class MongoConnector:
@@ -81,22 +80,35 @@ class MongoConnector:
         if clear:
             self.flush_collection(collection_name)
 
-
-        db_names: List[str] = self.client.list_database_names()
-
-        for name in db_names:
-            print(name)
-
         with open(json_file) as f:
-            data = [json.load(f)]
+            data: list = [json.load(f)]
             print(data)
             # collection.insert_many(data)
 
-        # print(f"{len(data)} documents inserted into collection {collection_name}.")
+        print(f"{len(data)} documents inserted into collection {collection_name}.")
+    
+    def query(self, collection_name: str) -> None:
+        # find documents where the 'status' field is 'active'
+        try:
+            collection = self.db.create_collection(collection_name)
+        except:
+            collection = self.db[collection_name]
+        print("penis")
+        print(collection)
+
+        documents = collection.find()
+
+        # print each document
+        for document in documents:
+            print("penis2")
+            print(document)
+
 
 
 if __name__ == '__main__':
-    mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
+    mongo: MongoConnector = MongoConnector('localhost', 27017, 'sample')
     mongo.connect()
-    mongo.insert_data('restaurants_collection', '/Users/brianreicher/Downloads/restaurants.json')
+    # mongo.insert_data('sample_coll', 'data/sample.json', clear=False)
+    # mongo.flush_collection("sample_coll")
+    mongo.query('sample_coll')
     mongo.disconnect()
