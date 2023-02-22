@@ -107,7 +107,8 @@ class MongoConnector:
 if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'sample')
     mongo.connect()
-    # mongo.insert_data('sample_coll', 'data/sample.json', clear=False)
-    mongo.flush_collection("sample_coll")
+    mongo.insert_data('sample_coll', 'data/sample.json', clear=False)
     mongo.query('sample_coll')
+
+    mongo.flush_collection("sample_coll")
     mongo.disconnect()
