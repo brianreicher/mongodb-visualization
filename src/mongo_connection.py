@@ -122,13 +122,14 @@ class MongoConnector:
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def search_query(self, collection_name: str, query, lim=10) -> None:
+    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10) -> None:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
         Args:
             collection_name (str): The collection name to create.
-            query (dict | list): The collection query to execute.
+            query (dict): The collection query to execute.
+            projection (dict): The projection to map.
             lim (int): The limit on the number of objects to return.
         """
 
@@ -137,7 +138,7 @@ class MongoConnector:
         except:
             collection = self.db[collection_name]
         
-        documents = collection.find(query).limit(lim)
+        documents = collection.find(qu, proj).limit(lim)
 
         # print each document
         for document in documents:
@@ -216,6 +217,24 @@ if __name__ == '__main__':
                                                         {"$sort": {"avgScore": -1}},
                                                         {"$limit": 10}
                                                     ])
+    
+    print("\n Restaurants which have a zipcode that starts with '10' and they are of either Italian or Chinese cuisine and have been graded 'A' in their latest grade: \n")
+    mongo.search_query(collection_name="resturants_collection", qu = {
+                                                            "address.zipcode": { "$regex": "^10" },
+                                                            "$or": [
+                                                                { "cuisine": "Italian" },
+                                                                { "cuisine": "Chinese" }
+                                                            ],
+                                                            "grades.0.grade": "A"
+                                                        },
+                                                proj = {
+                                                    "name": 1,
+                                                    "borough": 1,
+                                                    "cuisine": 1,
+                                                    "grades.date": 1,
+                                                    "grades.grade": 1,
+                                                    "grades.score": 1
+                                                })
     
     # mongo.flush_collection("resturants_collection")
     mongo.disconnect()
