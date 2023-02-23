@@ -122,21 +122,26 @@ class MongoConnector:
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def search_query(self, collection_name: str, query) -> None:
+    def search_query(self, collection_name: str, query, lim=10) -> None:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
         Args:
             collection_name (str): The collection name to create.
             query (dict | list): The collection query to execute.
+            lim (int): The limit on the number of objects to return.
         """
 
         try:
             collection = self.db.create_collection(collection_name)
         except:
             collection = self.db[collection_name]
+        
+        documents = collection.find(query).limit(lim)
+        print("-------------------------------------")
+        print(query)
+        print("-------------------------------------")
 
-        documents = collection.find(query)
 
         # print each document
         for document in documents:
@@ -156,8 +161,6 @@ class MongoConnector:
         except:
             collection = self.db[collection_name]
 
-        print(collection)
-
         documents = collection.aggregate(query)
 
         # print each document
@@ -172,7 +175,7 @@ if __name__ == '__main__':
     if mongo.collection_size("resturants_collection") == 0:
         mongo.insert_data('resturants_collection', 'data/restaurants.json', clear=False)
 
-    # How many McDonald's Exist in NYC?
+    print("\n Number of McDonald's in NYC: \n")
     mongo.aggregate_query("resturants_collection", [
                                                     {
                                                         "$match": {
@@ -182,7 +185,7 @@ if __name__ == '__main__':
                                                     {"$count":"totalMcDonalds"}
                                                     ])
 
-    # Number of restaurants in each bourough
+    print("\n Number of restaurants in each bourough: \n")
     mongo.aggregate_query("resturants_collection", [
                                                     {
                                                         '$group': {
@@ -192,5 +195,30 @@ if __name__ == '__main__':
                                                     }
                                                 ])
 
+    print("\n Boroughs with the highest number of Chinese restaurants --> give the number of Chinese restaurants in each boroughough: \n")
+    mongo.aggregate_query("resturants_collection", [
+                                                    { "$match": { "cuisine": "Chinese" } },
+                                                    {
+                                                        "$group": {
+                                                        "_id": "$borough",
+                                                        "count": { "$sum": 1 }
+                                                        }
+                                                    },
+                                                    { "$sort": { "count": -1 } }
+                                                    ])
+    
+    print("\n Top 10 restaurants with the highest average score, sorted by average score (min 5 reviews): \n")
+    mongo.aggregate_query("resturants_collection", 
+                                                       [{"$match": {"grades": {"$size": 5}}},
+                                                        {"$project": {
+                                                            "name": 1,
+                                                            "borough": 1,
+                                                            "cuisine": 1,
+                                                            "grades": 1,
+                                                            "avgScore": {"$avg": "$grades.score"}
+                                                        }},
+                                                        {"$sort": {"avgScore": -1}},
+                                                        {"$limit": 10}
+                                                    ])
     # mongo.flush_collection("resturants_collection")
     mongo.disconnect()
