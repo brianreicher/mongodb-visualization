@@ -173,7 +173,7 @@ class MongoDriver():
         except:
             collection = self.db[collection_name]
 
-        # execute the aggregate(() query
+        # execute the aggregate() query
         documents = collection.aggregate(query)
 
         # append each doc to the result, printing if necessary
