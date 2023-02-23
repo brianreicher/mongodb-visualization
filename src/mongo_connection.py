@@ -2,7 +2,7 @@ import pymongo
 import json
 
 
-class MongoConnector:
+class MongoConnector():
     """
     A class to connect to a MongoDB server and perform CRUD operations.
 
@@ -236,5 +236,25 @@ if __name__ == '__main__':
                                                     "grades.score": 1
                                                 })
     
+    print("\n All restaurants that are located in the Bronx borough and have an 'American' cuisine: \n")
+    mongo.search_query(collection_name="resturants_collection", qu = {"borough": "Bronx", "cuisine": "American"}, proj={ "name": 1,
+                                                                                                                         "borough": 1,
+                                                                                                                         "cuisine": 1}, lim=5)
+
+    print("\n All restaurants that have a 'Pizza' cuisine and a 'B' grade in their latest inspection: \n")
+    mongo.search_query(collection_name="resturants_collection",     qu={
+                                                                        "cuisine": "Pizza",
+                                                                        "grades.0.grade": "B"
+                                                                    },
+                                                                    proj={
+                                                                        "name": 1,
+                                                                        "borough": 1,
+                                                                        "cuisine": 1,
+                                                                        "grades": {
+                                                                            "$elemMatch": {"grade": "B"}
+                                                                        }
+                                                                    }, lim=5)
+
+
     # mongo.flush_collection("resturants_collection")
     mongo.disconnect()
