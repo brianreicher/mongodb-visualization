@@ -276,8 +276,19 @@ if __name__ == '__main__':
 
 
     print("\n All restaurants that have a 'Chinese' or 'Japanese' cuisine, and are located in the 'Queens' borough, and have a grade 'A' in their latest inspection. \n")
-    # mongo.search_query(collection_name="restaurants_collection", qu={"borough": "Queens", "cuisine": {"$in": ["Chinese", "Japanese"]}, "grades.0.grade": "A"}, proj={"name": 1, "borough": 1, "cuisine": 1, "grades.$": {"$sort": {"date": -1}}, "_id": 0}, lim=5)
-
+    mongo.search_query(collection_name="restaurants_collection",     qu={
+                                                                        "borough": "Queens", 
+                                                                        "cuisine": {"$in": ["Chinese", "Japanese"]}, 
+                                                                        "grades.0.grade": "A"
+                                                                    }, 
+                                                                    proj={
+                                                                        "name": 1, 
+                                                                        "borough": 1, 
+                                                                        "cuisine": 1, 
+                                                                        "grades": 1,
+                                                                        "_id": 0
+                                                                    },
+                                                                    lim=5)
 
     print("\n Visualization of the distribution of restaurants across different cuisines in the NYC boroughs: \n")
     res: list = mongo.aggregate_query("restaurants_collection", [{"$group": {"_id": {"borough": "$borough", "cuisine": "$cuisine"}, "count": {"$sum": 1}}},
