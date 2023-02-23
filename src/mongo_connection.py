@@ -113,7 +113,7 @@ class MongoConnector:
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def query(self, collection_name: str, query: dict) -> None:
+    def search_query(self, collection_name: str, query: dict) -> None:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
@@ -135,6 +135,27 @@ class MongoConnector:
         for document in documents:
             print(document)
 
+    def aggregate_query(self, collection_name: str, query: dict) -> None:
+        """
+        Method to execute aggregate queries on a given collection on the established database on the MongoDB server.
+
+        Args:
+            collection_name (str): The collection name to create.
+            query (dict): The collection query to execute.
+        """
+
+        try:
+            collection = self.db.create_collection(collection_name)
+        except:
+            collection = self.db[collection_name]
+
+        print(collection)
+
+        documents = collection.aggregate(query)
+
+        # print each document
+        for document in documents:
+            print(document)
 
 if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
