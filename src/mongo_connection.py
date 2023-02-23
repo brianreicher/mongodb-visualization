@@ -138,10 +138,6 @@ class MongoConnector:
             collection = self.db[collection_name]
         
         documents = collection.find(query).limit(lim)
-        print("-------------------------------------")
-        print(query)
-        print("-------------------------------------")
-
 
         # print each document
         for document in documents:
@@ -220,5 +216,6 @@ if __name__ == '__main__':
                                                         {"$sort": {"avgScore": -1}},
                                                         {"$limit": 10}
                                                     ])
+    
     # mongo.flush_collection("resturants_collection")
     mongo.disconnect()
