@@ -5,7 +5,7 @@ import plotly.io as pio
 import pandas as pd
 
 
-class MongoConnector():
+class MongoDriver():
     """
     A class to connect to a MongoDB server and perform CRUD operations.
 
@@ -125,7 +125,7 @@ class MongoConnector():
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10) -> list:
+    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10, show=True) -> list:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
@@ -134,6 +134,7 @@ class MongoConnector():
             query (dict): The collection query to execute.
             projection (dict): The projection to map.
             lim (int): The limit on the number of objects to return.
+            show (bool): Whether to display the given query.
         """
 
         try:
@@ -145,21 +146,23 @@ class MongoConnector():
 
         result: list = []
 
-        # print each document
+        # append each doc to the result, printing if necessary
         for document in documents:
-            print(document)
+            if show:
+                print(document)
             result.append(document)
 
         return result
 
 
-    def aggregate_query(self, collection_name: str, query) -> list:
+    def aggregate_query(self, collection_name: str, query, show=True) -> list:
         """
         Method to execute aggregate queries on a given collection on the established database on the MongoDB server.
 
         Args:
             collection_name (str): The collection name to create.
             query (dict | list): The collection query to execute.
+            show (bool): Whether to display the given query.
         """
 
         try:
@@ -169,21 +172,48 @@ class MongoConnector():
 
         documents = collection.aggregate(query)
 
-        # print each document
+        # append each doc to the result, printing if necessary
         result: list = []
         for document in documents:
-            print(document)
+            if show:
+                print(document)
             result.append(document)
 
         return result
     
     @staticmethod
-    def plot_query() -> None:
-        pass
+    def plot_query( mongo_responnse: list, 
+                    x_var: str, 
+                    y_var: str, 
+                    color_on:str, 
+                    plot_title:str, 
+                    save_as=None) -> None:
+        """
+        Method to plot visualizations from a given MongoDB query response.
+
+        Args:
+            mongo_responnse (list): The query response.
+            x_var (str): The query variable to plot on the x-axis.
+            y_var (str): The query variable to plot on the y-axis.
+            color_on (str): The query variable to color the plot on.
+            plot_title (str): Display title for the visualization.
+            save_as (None | str): Defines where and how to save the resulting plot.
+        """
+
+        # write the query output to a dataframe
+        df: pd.DataFrame = pd.DataFrame(mongo_responnse)
+
+        # create the figure given the passed x_var, y_var, color, and title
+        fig = px.bar(df, x=x_var, y=y_var, color=color_on, title=plot_title)
+
+        # display the figure and save if desired
+        fig.show()
+        if save_as is not None:
+            pio.write_image(fig, save_as)
 
 
 if __name__ == '__main__':
-    mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
+    mongo: MongoDriver = MongoDriver('localhost', 27017, 'restaurants')
     mongo.connect()
 
     if mongo.collection_size("restaurants_collection") == 0:
@@ -223,7 +253,7 @@ if __name__ == '__main__':
     
     print("\n Top 10 restaurants with the highest average score, sorted by average score (min 5 reviews): \n")
     mongo.aggregate_query("restaurants_collection", 
-                                                       [{"$match": {"grades": {"$size": 5}}},
+                                                       [{"$match": {"grades":{"$gt": 5}}},
                                                         {"$project": {
                                                             "name": 1,
                                                             "borough": 1,
@@ -293,14 +323,11 @@ if __name__ == '__main__':
 
     print("\n Visualization of the distribution of restaurants across different cuisines in the NYC boroughs: \n")
     res: list = mongo.aggregate_query("restaurants_collection", [{"$group": {"_id": {"borough": "$borough", "cuisine": "$cuisine"}, "count": {"$sum": 1}}},
-                                                                    {"$project": {"borough": "$_id.borough", "cuisine": "$_id.cuisine", "count": "$count", "_id": 0}}
-                                                                    ])
+                                                                    {"$project": {"borough": "$_id.borough", "cuisine": "$_id.cuisine", "count": "$count", "_id": 0}}]
+                                                                    , show=False)
 
-
-    df: pd.DataFrame = pd.DataFrame(res)
-    fig = px.bar(df, x="borough", y="count", color="cuisine", title="Restaurant counts by cuisine in NYC boroughs")
-    fig.show()
-    pio.write_image(fig, './data/mongo_visualization.png')
+    # plot the previous query
+    mongo.plot_query(res, x_var="borough", y_var="count", color_on="cuisine", plot_title="Resturant Count by Cusiene in NYC Boroughs", save_as='./data/mongo_visualization.png')
 
     # mongo.flush_collection("restaurants_collection")
     mongo.disconnect()
