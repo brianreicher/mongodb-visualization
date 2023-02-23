@@ -172,7 +172,25 @@ if __name__ == '__main__':
     if mongo.collection_size("resturants_collection") == 0:
         mongo.insert_data('resturants_collection', 'data/restaurants.json', clear=False)
 
-    mongo.aggregate_query("resturants_collection", [{"$match":{"name":"Mcdonald'S"}},{"$count":"totalMcDonalds"}])
+    # How many McDonald's Exist in NYC?
+    mongo.aggregate_query("resturants_collection", [
+                                                    {
+                                                        "$match": {
+                                                                    "name":"Mcdonald'S"
+                                                                    }
+                                                    },
+                                                    {"$count":"totalMcDonalds"}
+                                                    ])
 
-    mongo.flush_collection("resturants_collection")
+    # Number of restaurants in each bourough
+    mongo.aggregate_query("resturants_collection", [
+                                                    {
+                                                        '$group': {
+                                                            '_id': '$borough',
+                                                            'count': {'$sum': 1}
+                                                        }
+                                                    }
+                                                ])
+
+    # mongo.flush_collection("resturants_collection")
     mongo.disconnect()
