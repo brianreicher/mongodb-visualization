@@ -255,6 +255,8 @@ if __name__ == '__main__':
                                                                         }
                                                                     }, lim=5)
 
+    print("\n Top 5 restaurants with the highest average score for their grades, and only show their name, cuisine, and average score: \n")
+    mongo.search_query(collection_name="resturants_collection",qu={}, proj={"name": 1, "cuisine": 1, "avgScore": {"$avg": "$grades.score"}, "_id": 0}, lim=5)
 
     # mongo.flush_collection("resturants_collection")
     mongo.disconnect()
