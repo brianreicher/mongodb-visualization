@@ -1,5 +1,7 @@
 import pymongo
 import json
+import plotly.express as px
+import pandas as pd
 
 
 class MongoConnector():
@@ -50,7 +52,7 @@ class MongoConnector():
         Args:
             collection_name (str): The collection name to flush.
         """
-        collection = self.db[collection_name]
+        collection= self.db[collection_name]
 
         # Delete all documents in the collection
         result = collection.delete_many({})
@@ -122,7 +124,7 @@ class MongoConnector():
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10) -> None:
+    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10) -> list:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
@@ -140,11 +142,17 @@ class MongoConnector():
         
         documents = collection.find(qu, proj).limit(lim)
 
+        result: list = []
+
         # print each document
         for document in documents:
             print(document)
+            result.append(document)
 
-    def aggregate_query(self, collection_name: str, query) -> None:
+        return result
+
+
+    def aggregate_query(self, collection_name: str, query) -> list:
         """
         Method to execute aggregate queries on a given collection on the established database on the MongoDB server.
 
@@ -161,19 +169,23 @@ class MongoConnector():
         documents = collection.aggregate(query)
 
         # print each document
+        result: list = []
         for document in documents:
             print(document)
+            result.append(document)
+
+        return result
 
 
 if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
     mongo.connect()
 
-    if mongo.collection_size("resturants_collection") == 0:
-        mongo.insert_data('resturants_collection', 'data/restaurants.json', clear=False)
+    if mongo.collection_size("restaurants_collection") == 0:
+        mongo.insert_data('restaurants_collection', 'data/restaurants.json', clear=True)
 
     print("\n Number of McDonald's in NYC: \n")
-    mongo.aggregate_query("resturants_collection", [
+    mongo.aggregate_query("restaurants_collection", [
                                                     {
                                                         "$match": {
                                                                     "name":"Mcdonald'S"
@@ -183,7 +195,7 @@ if __name__ == '__main__':
                                                     ])
 
     print("\n Number of restaurants in each bourough: \n")
-    mongo.aggregate_query("resturants_collection", [
+    mongo.aggregate_query("restaurants_collection", [
                                                     {
                                                         '$group': {
                                                             '_id': '$borough',
@@ -193,7 +205,7 @@ if __name__ == '__main__':
                                                 ])
 
     print("\n Boroughs with the highest number of Chinese restaurants --> give the number of Chinese restaurants in each boroughough: \n")
-    mongo.aggregate_query("resturants_collection", [
+    mongo.aggregate_query("restaurants_collection", [
                                                     { "$match": { "cuisine": "Chinese" } },
                                                     {
                                                         "$group": {
@@ -205,7 +217,7 @@ if __name__ == '__main__':
                                                     ])
     
     print("\n Top 10 restaurants with the highest average score, sorted by average score (min 5 reviews): \n")
-    mongo.aggregate_query("resturants_collection", 
+    mongo.aggregate_query("restaurants_collection", 
                                                        [{"$match": {"grades": {"$size": 5}}},
                                                         {"$project": {
                                                             "name": 1,
@@ -219,7 +231,7 @@ if __name__ == '__main__':
                                                     ])
     
     print("\n Restaurants which have a zipcode that starts with '10' and they are of either Italian or Chinese cuisine and have been graded 'A' in their latest grade: \n")
-    mongo.search_query(collection_name="resturants_collection", qu = {
+    mongo.search_query(collection_name="restaurants_collection", qu = {
                                                             "address.zipcode": { "$regex": "^10" },
                                                             "$or": [
                                                                 { "cuisine": "Italian" },
@@ -237,12 +249,12 @@ if __name__ == '__main__':
                                                 })
     
     print("\n All restaurants that are located in the Bronx borough and have an 'American' cuisine: \n")
-    mongo.search_query(collection_name="resturants_collection", qu = {"borough": "Bronx", "cuisine": "American"}, proj={ "name": 1,
+    mongo.search_query(collection_name="restaurants_collection", qu = {"borough": "Bronx", "cuisine": "American"}, proj={ "name": 1,
                                                                                                                          "borough": 1,
                                                                                                                          "cuisine": 1}, lim=5)
 
     print("\n All restaurants that have a 'Pizza' cuisine and a 'B' grade in their latest inspection: \n")
-    mongo.search_query(collection_name="resturants_collection",     qu={
+    mongo.search_query(collection_name="restaurants_collection",     qu={
                                                                         "cuisine": "Pizza",
                                                                         "grades.0.grade": "B"
                                                                     },
@@ -256,7 +268,16 @@ if __name__ == '__main__':
                                                                     }, lim=5)
 
     print("\n Top 5 restaurants with the highest average score for their grades, and only show their name, cuisine, and average score: \n")
-    mongo.search_query(collection_name="resturants_collection",qu={}, proj={"name": 1, "cuisine": 1, "avgScore": {"$avg": "$grades.score"}, "_id": 0}, lim=5)
+    mongo.search_query(collection_name="restaurants_collection",qu={}, proj={"name": 1, "cuisine": 1, "avgScore": {"$avg": "$grades.score"}, "_id": 0}, lim=5)
 
-    # mongo.flush_collection("resturants_collection")
+    res: list = mongo.aggregate_query("restaurants_collection", [{"$group": {"_id": {"borough": "$borough", "cuisine": "$cuisine"}, "count": {"$sum": 1}}},
+                                                                    {"$project": {"borough": "$_id.borough", "cuisine": "$_id.cuisine", "count": "$count", "_id": 0}}
+                                                                    ])
+
+
+    df: pd.DataFrame = pd.DataFrame(res)
+    fig = px.bar(df, x="borough", y="count", color="cuisine", title="Restaurant counts by cuisine in NYC boroughs")
+    fig.show()
+
+    mongo.flush_collection("restaurants_collection")
     mongo.disconnect()
