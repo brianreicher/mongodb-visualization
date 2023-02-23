@@ -97,11 +97,21 @@ class MongoConnector:
             self.flush_collection(collection_name)
 
         with open(json_file) as f:
-            data: list = [json.load(f)]
-            print(data)
-            collection.insert_many(data)
+            # data: list = json.load(f)
+            data: str = f.read()
 
-        print(f"{len(data)} documents inserted into collection {collection_name} in {self.db.name}.")
+            # Split the data into individual JSON objects
+            objects: list[str] = data.strip().split('\n')
+
+            # Wrap the objects in an array
+            json_data: str = '[' + ','.join(objects) + ']'
+
+            # Load the JSON data as a Python object
+            data = json.loads(json_data)
+
+            collection.insert_many(list(data))
+
+        print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
     def query(self, collection_name: str, query: dict) -> None:
         """
@@ -126,12 +136,10 @@ class MongoConnector:
             print(document)
 
 
-
 if __name__ == '__main__':
-    mongo: MongoConnector = MongoConnector('localhost', 27017, 'sample')
+    mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
     mongo.connect()
-    mongo.insert_data('sample_coll', 'data/sample.json', clear=True)
-    mongo.query('sample_coll', {})
-
-    mongo.flush_collection("sample_coll")
+    mongo.insert_data('resturants_collection', 'data/restaurants.json', clear=True)
+    # mongo.query('resturants_collection', {})
+    mongo.flush_collection("resturants_collection")
     mongo.disconnect()
