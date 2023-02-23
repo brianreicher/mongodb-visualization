@@ -175,6 +175,10 @@ class MongoConnector():
             result.append(document)
 
         return result
+    
+    @staticmethod
+    def plot_query() -> None:
+        pass
 
 
 if __name__ == '__main__':
@@ -269,6 +273,10 @@ if __name__ == '__main__':
 
     print("\n Top 5 restaurants with the highest average score for their grades, and only show their name, cuisine, and average score: \n")
     mongo.search_query(collection_name="restaurants_collection",qu={}, proj={"name": 1, "cuisine": 1, "avgScore": {"$avg": "$grades.score"}, "_id": 0}, lim=5)
+
+
+    print("\n All restaurants that have a 'Chinese' or 'Japanese' cuisine, and are located in the 'Queens' borough, and have a grade 'A' in their latest inspection. \n")
+    # mongo.search_query(collection_name="restaurants_collection", qu={"borough": "Queens", "cuisine": {"$in": ["Chinese", "Japanese"]}, "grades.0.grade": "A"}, proj={"name": 1, "borough": 1, "cuisine": 1, "grades.$": {"$sort": {"date": -1}}, "_id": 0}, lim=5)
 
 
     print("\n Visualization of the distribution of restaurants across different cuisines in the NYC boroughs: \n")
