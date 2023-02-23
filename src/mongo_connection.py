@@ -78,6 +78,15 @@ class MongoConnector:
         """
         self.db.create_collection(collection_name)
         print(f"Created collecton {collection_name} in {self.db.name}")
+    
+    def collection_size(self, collection_name: str) -> int:
+        """
+        Checks the size of a given collection on the established database on the MongoDB server.
+
+        Args:
+            collection_name (str): The collection name to create.
+        """
+        return len(list(self.db[collection_name].find({})))
 
     def insert_data(self, collection_name: str, json_file: str, clear=False) -> None:
         """
@@ -113,13 +122,13 @@ class MongoConnector:
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def search_query(self, collection_name: str, query: dict) -> None:
+    def search_query(self, collection_name: str, query) -> None:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
         Args:
             collection_name (str): The collection name to create.
-            query (dict): The collection query to execute.
+            query (dict | list): The collection query to execute.
         """
 
         try:
@@ -127,21 +136,19 @@ class MongoConnector:
         except:
             collection = self.db[collection_name]
 
-        print(collection)
-
         documents = collection.find(query)
 
         # print each document
         for document in documents:
             print(document)
 
-    def aggregate_query(self, collection_name: str, query: dict) -> None:
+    def aggregate_query(self, collection_name: str, query) -> None:
         """
         Method to execute aggregate queries on a given collection on the established database on the MongoDB server.
 
         Args:
             collection_name (str): The collection name to create.
-            query (dict): The collection query to execute.
+            query (dict | list): The collection query to execute.
         """
 
         try:
@@ -157,10 +164,15 @@ class MongoConnector:
         for document in documents:
             print(document)
 
+
 if __name__ == '__main__':
     mongo: MongoConnector = MongoConnector('localhost', 27017, 'restaurants')
     mongo.connect()
-    mongo.insert_data('resturants_collection', 'data/restaurants.json', clear=True)
-    # mongo.query('resturants_collection', {})
+
+    if mongo.collection_size("resturants_collection") == 0:
+        mongo.insert_data('resturants_collection', 'data/restaurants.json', clear=False)
+
+    mongo.aggregate_query("resturants_collection", [{"$match":{"name":"Mcdonald'S"}},{"$count":"totalMcDonalds"}])
+
     mongo.flush_collection("resturants_collection")
     mongo.disconnect()
