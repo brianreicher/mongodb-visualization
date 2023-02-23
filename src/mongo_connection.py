@@ -182,7 +182,7 @@ if __name__ == '__main__':
     mongo.connect()
 
     if mongo.collection_size("restaurants_collection") == 0:
-        mongo.insert_data('restaurants_collection', 'data/restaurants.json', clear=True)
+        mongo.insert_data('restaurants_collection', 'data/restaurants.json', clear=False)
 
     print("\n Number of McDonald's in NYC: \n")
     mongo.aggregate_query("restaurants_collection", [
@@ -270,6 +270,8 @@ if __name__ == '__main__':
     print("\n Top 5 restaurants with the highest average score for their grades, and only show their name, cuisine, and average score: \n")
     mongo.search_query(collection_name="restaurants_collection",qu={}, proj={"name": 1, "cuisine": 1, "avgScore": {"$avg": "$grades.score"}, "_id": 0}, lim=5)
 
+
+    print("\n Visualization of the distribution of restaurants across different cuisines in the NYC boroughs: \n")
     res: list = mongo.aggregate_query("restaurants_collection", [{"$group": {"_id": {"borough": "$borough", "cuisine": "$cuisine"}, "count": {"$sum": 1}}},
                                                                     {"$project": {"borough": "$_id.borough", "cuisine": "$_id.cuisine", "count": "$count", "_id": 0}}
                                                                     ])
@@ -279,5 +281,5 @@ if __name__ == '__main__':
     fig = px.bar(df, x="borough", y="count", color="cuisine", title="Restaurant counts by cuisine in NYC boroughs")
     fig.show()
 
-    mongo.flush_collection("restaurants_collection")
+    # mongo.flush_collection("restaurants_collection")
     mongo.disconnect()
