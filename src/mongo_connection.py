@@ -1,6 +1,7 @@
 import pymongo
 import json
 import plotly.express as px
+import plotly.io as pio
 import pandas as pd
 
 
@@ -299,6 +300,7 @@ if __name__ == '__main__':
     df: pd.DataFrame = pd.DataFrame(res)
     fig = px.bar(df, x="borough", y="count", color="cuisine", title="Restaurant counts by cuisine in NYC boroughs")
     fig.show()
+    pio.write_image(fig, './data/mongo_visualization.png')
 
     # mongo.flush_collection("restaurants_collection")
     mongo.disconnect()
