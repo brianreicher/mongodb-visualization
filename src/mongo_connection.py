@@ -137,11 +137,13 @@ class MongoDriver():
             show (bool): Whether to display the given query.
         """
 
+        # set the collection name, create a new collection if necessary
         try:
             collection = self.db.create_collection(collection_name)
         except:
             collection = self.db[collection_name]
         
+        # execute the find() query with given query, projection, and limit
         documents = collection.find(qu, proj).limit(lim)
 
         result: list = []
@@ -165,11 +167,13 @@ class MongoDriver():
             show (bool): Whether to display the given query.
         """
 
+        # set the collection name, create a new collection if necessary
         try:
             collection = self.db.create_collection(collection_name)
         except:
             collection = self.db[collection_name]
 
+        # execute the aggregate(() query
         documents = collection.aggregate(query)
 
         # append each doc to the result, printing if necessary
