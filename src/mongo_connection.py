@@ -125,7 +125,7 @@ class MongoDriver():
 
         print(f"{len(data)} documents inserted into collection {collection_name} in the {self.db.name} database.")
     
-    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10, show=True) -> list:
+    def search_query(self, collection_name: str, qu: dict, proj:dict, lim=10, show=False) -> list:
         """
         Method to execute queries on a given collection on the established database on the MongoDB server.
 
@@ -157,7 +157,7 @@ class MongoDriver():
         return result
 
 
-    def aggregate_query(self, collection_name: str, query, show=True) -> list:
+    def aggregate_query(self, collection_name: str, query, show=False) -> list:
         """
         Method to execute aggregate queries on a given collection on the established database on the MongoDB server.
 
