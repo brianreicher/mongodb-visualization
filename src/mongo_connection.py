@@ -288,9 +288,11 @@ if __name__ == '__main__':
                                                 })
     
     print("\n All restaurants that are located in the Bronx borough and have an 'American' cuisine: \n")
-    mongo.search_query(collection_name="restaurants_collection", qu = {"borough": "Bronx", "cuisine": "American"}, proj={ "name": 1,
-                                                                                                                         "borough": 1,
-                                                                                                                         "cuisine": 1}, lim=5)
+    mongo.search_query(collection_name="restaurants_collection", qu = {"borough": "Bronx", "cuisine": "American"},
+                       proj={ "_id": 0,
+                              "name": 1,
+                              "borough": 1,
+                              "cuisine": 1}, lim=5)
 
     print("\n All restaurants that have a 'Pizza' cuisine and a 'B' grade in their latest inspection: \n")
     mongo.search_query(collection_name="restaurants_collection",     qu={
@@ -298,6 +300,7 @@ if __name__ == '__main__':
                                                                         "grades.0.grade": "B"
                                                                     },
                                                                     proj={
+                                                                        "_id": 0,
                                                                         "name": 1,
                                                                         "borough": 1,
                                                                         "cuisine": 1,
